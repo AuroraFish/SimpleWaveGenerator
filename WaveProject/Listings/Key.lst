@@ -1,0 +1,52 @@
+C51 COMPILER V9.54   KEY                                                                   04/19/2024 21:22:25 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\Key.obj
+COMPILER INVOKED BY: E:\Keil5\C51\BIN\C51.EXE Key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Key.lst
+                    -) OBJECT(.\Objects\Key.obj)
+
+line level    source
+
+   1          #include <Regx52.h>
+   2          #include "Key.h"
+   3          #include "Delay.h"
+   4          
+   5          sbit Change_Wave = P1^0;
+   6          sbit Increase_Freq = P1^1;
+   7          sbit Decrease_Freq = P1^2;
+   8          sbit Increase_Duty = P1^3;
+   9          sbit Decrease_Duty = P1^4;
+  10          
+  11          enum KeyState_t key_state;
+  12          
+  13          /*
+  14            * @brief  返回按键状态
+  15            * @param  none
+  16            * @return KeyState_t  
+  17            * @note   none
+  18           */
+  19          enum KeyState_t Key()
+  20          {
+  21   1          key_state = NO_KEY;
+  22   1          if (Change_Wave==0) {Delay(20);while(Change_Wave==0);Delay(20);key_state =CH_WAVE;}
+  23   1          if (Increase_Freq==0) {Delay(20);while(Increase_Freq==0);Delay(20);key_state =ADD_FREQ;}
+  24   1          if (Decrease_Freq==0) {Delay(20);while(Decrease_Freq==0);Delay(20);key_state =SUB_FREQ;}
+  25   1          if (Increase_Duty==0) {Delay(20);while(Increase_Duty==0);Delay(20);key_state =ADD_DUTY;}
+  26   1          if (Decrease_Duty==0) {Delay(20);while(Decrease_Duty==0);Delay(20);key_state =SUB_DUTY;}
+  27   1          return key_state;
+  28   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    120    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

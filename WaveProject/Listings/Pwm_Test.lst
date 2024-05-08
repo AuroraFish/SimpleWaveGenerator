@@ -1,0 +1,179 @@
+C51 COMPILER V9.54   PWM_TEST                                                              04/19/2024 21:27:13 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE PWM_TEST
+OBJECT MODULE PLACED IN .\Objects\Pwm_Test.obj
+COMPILER INVOKED BY: E:\Keil5\C51\BIN\C51.EXE Pwm_Test.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Pw
+                    -m_Test.lst) OBJECT(.\Objects\Pwm_Test.obj)
+
+line level    source
+
+   1          #include <REGX52.h>
+   2          #include "Pwm_Test.h"
+   3          #include "SinTable.h"
+   4          
+   5          sbit PWM = P3^0;
+   6          
+   7          unsigned char timeh=0, timel=0;
+   8          unsigned char Scale = 50;
+   9          
+  10          /*
+  11            * @brief  计算正弦波定时器重装值
+  12            * @param  none
+  13            * @return none        
+  14            * @note   none
+  15           */
+  16          void Data_Handle0(void)
+  17          {
+  18   1          // 1 / freq / 256 * 1000000
+  19   1          unsigned int temp = 0;
+  20   1              temp = 62500/(freq*16);  
+  21   1              timeh =( 65536-temp)/256;
+  22   1              timel = (65536-temp)%256;
+  23   1      }
+  24          
+  25          /*
+  26            * @brief  计算方波定时器重装值
+  27            * @param  none
+  28            * @return none        
+  29            * @note   none
+  30           */
+  31          void Data_Handle1(void)
+  32          {
+  33   1          //1 / freq / 100 * 1000000
+  34   1          unsigned int temp = 0;
+  35   1          temp = 10000/freq;
+  36   1          timeh = (65536-temp)/256;
+  37   1          timel = (65536-temp)%256;
+  38   1      }
+  39          
+  40          /*
+  41            * @brief  输出正弦波
+  42            * @param  none
+  43            * @return none        
+  44            * @note   none
+  45           */
+  46          void Sin_Wave(void)
+  47          {
+  48   1          P2 = sin[sin_count];
+  49   1          if (sin_count == 256) {
+  50   2              sin_count = 0;
+  51   2          }
+  52   1      }
+  53          
+  54          /*
+C51 COMPILER V9.54   PWM_TEST                                                              04/19/2024 21:27:13 PAGE 2   
+
+  55            * @brief  定时器0初始化
+  56            * @param  none
+  57            * @return none        
+  58            * @note   none
+  59           */
+  60          void Timer0_Init(void)
+  61          {  
+  62   1              TMOD &= 0xF0;                   //设置定时器模式
+  63   1              TMOD |= 0x01;                   //设置定时器模式
+  64   1          TL0 = timel;
+  65   1          TH0 = timeh;
+  66   1              TF0 = 0;                                //清除TF0标志
+  67   1              //TR0 = 1;                              //定时器0开始计时
+  68   1          EA = 1;
+  69   1          ET0 = 1;
+  70   1      }
+  71          
+  72          /*
+  73            * @brief  启动定时器
+  74            * @param  none
+  75            * @return none        
+  76            * @note   none
+  77           */
+  78          void Timer0_Start(void)
+  79          {
+  80   1          TL0 = timel;
+  81   1          TH0 = timeh;
+  82   1          TR0 = 1;
+  83   1      }
+  84          
+  85          /*
+  86            * @brief  停止定时器
+  87            * @param  none
+  88            * @return none        
+  89            * @note   none
+  90           */
+  91          void Timer0_Stop(void)
+  92          {
+  93   1          TR0 = 0;
+  94   1      }
+  95          
+  96          /*
+  97            * @brief  设置占空比
+  98            * @param  x: 占空比
+  99            * @return none        
+ 100            * @note   none
+ 101           */
+ 102          void Set_Duty(unsigned char x) 
+ 103          {
+ 104   1          Scale = x;
+ 105   1      }
+ 106          
+ 107          /*
+ 108            * @brief  返回占空比
+ 109            * @param  none
+ 110            * @return 占空比   
+ 111            * @note   none
+ 112           */
+ 113          unsigned char Get_Duty(void)
+ 114          {
+ 115   1          return Scale;
+ 116   1      }
+C51 COMPILER V9.54   PWM_TEST                                                              04/19/2024 21:27:13 PAGE 3   
+
+ 117          
+ 118          /*
+ 119            * @brief  定时器中断
+ 120            * @param  none
+ 121            * @return none        
+ 122            * @note   none
+ 123           */
+ 124          void Timer0_Routine(void) interrupt 1
+ 125          {  
+ 126   1          switch (Output) {
+ 127   2              //方波
+ 128   2              case REC: {
+ 129   3                  TL0 = timel;
+ 130   3                  TH0 = timeh;
+ 131   3                  rec_count++;
+ 132   3                  rec_count %= 100;
+ 133   3                  
+ 134   3                  if (rec_count < Scale) {
+ 135   4                      P2 = 0xFF;
+ 136   4                  }
+ 137   3                  else {
+ 138   4                      P2 = 0x00;
+ 139   4                  }
+ 140   3                  break;
+ 141   3              }
+ 142   2              //正弦波
+ 143   2              case SIN: {
+ 144   3                  TL0 = timel;
+ 145   3                  TH0 = timeh;
+ 146   3                  sin_count++;
+ 147   3                  Sin_Wave();
+ 148   3                  break;
+ 149   3              }
+ 150   2          }
+ 151   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    321    ----
+   CONSTANT SIZE    =    256    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

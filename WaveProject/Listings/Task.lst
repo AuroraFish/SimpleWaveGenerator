@@ -1,0 +1,251 @@
+C51 COMPILER V9.54   TASK                                                                  04/19/2024 21:27:14 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE TASK
+OBJECT MODULE PLACED IN .\Objects\Task.obj
+COMPILER INVOKED BY: E:\Keil5\C51\BIN\C51.EXE Task.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Task.l
+                    -st) OBJECT(.\Objects\Task.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "Pwm_Test.h"
+   3          #include "LCD1602.h"    
+   4          #include "Delay.h"
+   5          #include "Key.h"
+   6          
+   7          //显示状态 默认/方波/正弦
+   8          enum WaveState_t{
+   9              DEFAULT_WAVE = 0,
+  10              REC_WAVE,
+  11              SIN_WAVE
+  12          };
+  13          
+  14          enum WaveState_t state = DEFAULT_WAVE;
+  15          enum KeyState_t button_state;
+  16          enum WAVE Output = REC;
+  17          
+  18          unsigned char freq = 1;
+  19          unsigned char sin_count = 0;
+  20          unsigned char rec_count = 0;
+  21          unsigned char temp;
+  22          
+  23          /*
+  24            * @brief  计算重装值
+  25            * @param  cur: REC/SIN
+  26            * @return none        
+  27            * @note   none
+  28           */
+  29          void Handle_Freq(enum WAVE cur)
+  30          {
+  31   1          switch (cur) {
+  32   2              case REC: {
+  33   3                  Data_Handle1();
+  34   3                  break;
+  35   3              }
+  36   2              
+  37   2              case SIN: {
+  38   3                  Data_Handle0(); 
+  39   3                  break;
+  40   3              }
+  41   2              default :
+  42   2                  break;
+  43   2          }
+  44   1      }
+  45          
+  46          /*
+  47            * @brief  获取下一状态
+  48            * @param  cur: DEFAULT_WAVE/REC_WAVE/SIN_WAVE
+  49            * @return none        
+  50            * @note   none
+  51           */
+  52          enum WaveState_t Next_WaveState(enum WaveState_t cur)
+  53          {
+  54   1          switch(cur) {
+C51 COMPILER V9.54   TASK                                                                  04/19/2024 21:27:14 PAGE 2   
+
+  55   2              case DEFAULT_WAVE:
+  56   2                  return REC_WAVE;
+  57   2              case REC_WAVE:
+  58   2                  return SIN_WAVE;
+  59   2              case SIN_WAVE:
+  60   2                  return DEFAULT_WAVE;
+  61   2          }
+  62   1          
+  63   1          return DEFAULT_WAVE;
+  64   1      }
+  65          
+  66          /*
+  67            * @brief  显示前初始化
+  68            * @param  cur: 当前状态
+  69            * @return none        
+  70            * @note   none
+  71           */
+  72          void Init_Wave_Setting(enum WaveState_t cur)
+  73          {
+  74   1          switch (cur) {
+  75   2              case DEFAULT_WAVE: {
+  76   3                  Timer0_Stop();
+  77   3                  break;
+  78   3              }
+  79   2              case REC_WAVE: {
+  80   3                  freq = 1;
+  81   3                  rec_count = 0;
+  82   3                  Set_Duty(50);
+  83   3                  Data_Handle1();
+  84   3                  Output = REC;
+  85   3                  Timer0_Start();
+  86   3                  break;
+  87   3              }
+  88   2              case SIN_WAVE: {
+  89   3                  freq = 1;
+  90   3                  sin_count = 0;
+  91   3                  Data_Handle0(); 
+  92   3                  Output = SIN;
+  93   3                  Timer0_Start();
+  94   3                  break;
+  95   3              }
+  96   2          }
+  97   1      }
+  98          
+  99          /*
+ 100            * @brief  初始化
+ 101            * @param  none
+ 102            * @return none        
+ 103            * @note   none
+ 104           */
+ 105          void Task_Init(void)
+ 106          {
+ 107   1          LCD_Init();
+ 108   1          Timer0_Init();
+ 109   1      }
+ 110          
+ 111          /*
+ 112            * @brief  LCD显示
+ 113            * @param  none
+ 114            * @return none        
+ 115            * @note   none
+ 116           */
+C51 COMPILER V9.54   TASK                                                                  04/19/2024 21:27:14 PAGE 3   
+
+ 117          void Task_Display(void)
+ 118          {
+ 119   1          
+ 120   1          switch(state) {
+ 121   2              case DEFAULT_WAVE: {
+ 122   3                  //初始界面
+ 123   3                  LCD_ShowString(1,1,"hello,world");
+ 124   3                  break;
+ 125   3              }
+ 126   2              
+ 127   2              case REC_WAVE: {
+ 128   3                  //方波图像
+ 129   3                  temp = Get_Duty();
+ 130   3                  temp = (temp==100)?99:temp;
+ 131   3                  LCD_ShowString(1, 1, "FREQUNCE:");
+ 132   3                  LCD_ShowCustomChar(2,2,1);
+ 133   3                  LCD_ShowCustomChar(2,3,1);
+ 134   3                  LCD_ShowString(2,5,"HZ:");
+ 135   3                  LCD_ShowString(2,11,"D:");
+ 136   3                  LCD_ShowChar(2,15,'%');
+ 137   3                  LCD_ShowNum(2,8,freq,2);
+ 138   3                  LCD_ShowNum(2,13,temp,2);
+ 139   3                  break;
+ 140   3              }
+ 141   2              
+ 142   2              case SIN_WAVE: {
+ 143   3                  //正弦图像
+ 144   3                  LCD_ShowString(1, 1, "FREQUNCE:");
+ 145   3                  LCD_ShowCustomChar(2,2,2);
+ 146   3                  LCD_ShowCustomChar(2,3,3);
+ 147   3                  LCD_ShowString(2,5,"HZ:");
+ 148   3                  LCD_ShowNum(2,8,freq,2);
+ 149   3                  break;
+ 150   3              }
+ 151   2              
+ 152   2              default: 
+ 153   2                  break;
+ 154   2          }
+ 155   1      }
+ 156          
+ 157          /*
+ 158            * @brief  按键处理
+ 159            * @param  none
+ 160            * @return none        
+ 161            * @note   none
+ 162           */
+ 163          void Task_Key_Handle(void)
+ 164          {
+ 165   1          button_state = Key();
+ 166   1          switch (button_state) {
+ 167   2              case NO_KEY: {
+ 168   3                  break;
+ 169   3              }
+ 170   2              
+ 171   2              case CH_WAVE: {
+ 172   3                  state = Next_WaveState(state);
+ 173   3                  Init_Wave_Setting(state);
+ 174   3                  LCD_CLEAR();
+ 175   3                  break;
+ 176   3              }
+ 177   2              
+ 178   2              case ADD_FREQ: {
+C51 COMPILER V9.54   TASK                                                                  04/19/2024 21:27:14 PAGE 4   
+
+ 179   3                  freq++;
+ 180   3                  if (freq >= 10)
+ 181   3                      freq = 10;
+ 182   3                  Handle_Freq(Output);
+ 183   3                  break;
+ 184   3              }
+ 185   2              
+ 186   2              case SUB_FREQ: {
+ 187   3                  freq--;
+ 188   3                  if (freq <= 1)
+ 189   3                      freq = 1;
+ 190   3                  Handle_Freq(Output);
+ 191   3                  break;
+ 192   3              }
+ 193   2              
+ 194   2              case ADD_DUTY: {
+ 195   3                  if (Output == REC) {
+ 196   4                      temp = Get_Duty();
+ 197   4                      temp += 10;
+ 198   4                      if (temp >= 100) {
+ 199   5                          temp = 100;
+ 200   5                      }
+ 201   4                      Set_Duty(temp);
+ 202   4                  }
+ 203   3                  break;
+ 204   3              }
+ 205   2              
+ 206   2              case SUB_DUTY: {
+ 207   3                  if (Output == REC) {
+ 208   4                      temp = Get_Duty();
+ 209   4                      temp -= 10;
+ 210   4                      if (temp <= 10) {
+ 211   5                          temp = 10;
+ 212   5                      }
+ 213   4                      Set_Duty(temp);
+ 214   4                  }
+ 215   3                  break;
+ 216   3              }
+ 217   2              
+ 218   2              default:
+ 219   2                  break;
+ 220   2          }
+ 221   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    413    ----
+   CONSTANT SIZE    =     29    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
